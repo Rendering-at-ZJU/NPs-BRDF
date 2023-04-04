@@ -1,4 +1,5 @@
 # A Compact Representation of Measured BRDFs Using Neural Processes
+![Image](teaser_nps.png)
 
 ## Requirements
 
@@ -9,9 +10,10 @@ The following environment is recommended and has been tested:
 
 ## Usage
 ### Pre-trained Models
-- The original NP model is provided in `models/LOG4_Mean_Dim7/weight/`.
-- The latent vectors of MERL and EPFL BRDFs are provided in `latent_vectors/`.
-- The trait vectors are provided in `traits/`, and each file contains a 7-dimensinal vector.
+- The weight of the original NP model (&sect; 3) is provided in `models/LOG4_Mean_Dim7/weight/`.
+- The latent vectors of MERL and EPFL BRDFs compressed by our original NP model are provided in `latent_vectors/`.
+- The trait vectors (&sect; 7.2) for BRDF editing are provided in `traits/`, and each file contains a 7-dimensional vector.
+- We also have plans to release our hypernetwork-based model (&sect; 6.1) soon.
 
 ### Examples
 **Compression**
