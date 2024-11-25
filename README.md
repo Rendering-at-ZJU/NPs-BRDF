@@ -13,7 +13,8 @@ The following environment is recommended and has been tested:
 - The weight of the original NP model (&sect; 3) is provided in `models/LOG4_Mean_Dim7/weight/`.
 - The latent vectors of MERL and EPFL BRDFs compressed by our original NP model are provided in `latent_vectors/`.
 - The trait vectors (&sect; 7.2) for BRDF editing are provided in `traits/`, and each file contains a 7-dimensional vector.
-- We also have plans to release our hypernetwork-based model (&sect; 6.1) soon.
+- NEWS: we have released our hypernetwork-based model (&sect; 6.1).
+<!-- - We also have plans to release our hypernetwork-based model (&sect; 6.1) soon. -->
 
 ### Examples
 **Compression**
@@ -32,6 +33,9 @@ The following environment is recommended and has been tested:
 **BRDF Interpolation**
 - To interpolate between two materials, run the command: `python NPs.py --mode interpolation --input latent_vectors/red-plastic_latentVector.npy --input1 latent_vectors/vch_golden_yellow_rgb_latentVector.npy --int_weight 0.5 --output output/interpolation.binary`
 - The paramter 'int_weight' represents the interpolation weight.
+
+**Backbone**
+- By default, BRDF decoding (used in Decompression, Editing, and Interpolation) are executed using our NP model. If the hypernetwork backbone is required, please specify the option `--backbone hypernet`.
 
 ## Citation
 If you use our data or code in your research, we would appreciate a citation via 

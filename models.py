@@ -129,3 +129,69 @@ def get_nps():
 
     nps = Model(input_tensor, out_tensor)
     return nps, encoder, decoder
+
+def manual_dense(args):
+    w, b, x = args
+    b = K.expand_dims(b, 1)
+    y = K.batch_dot(x, w) + b
+    return K.relu(y)
+
+def get_hypernet():
+    x_all = Input(shape=(None, Config.in_dim,), name="x_all")
+    z_sample = Input(shape=(Config.z_dim,), name='z_sample')
+    NoL = Input(shape=(None, 1))
+    NoV = Input(shape=(None, 1))
+
+    hyper_layer_dims = [400] * 7
+    main_layer_dims = [Config.in_dim, 16, 32, 32, 16, 3]
+
+    g = z_sample
+    for d in hyper_layer_dims:
+        g = Dense(d, activation='relu')(g)
+    
+    y = x_all
+    for i in range(1, len(main_layer_dims)):
+        w = Dense(main_layer_dims[i-1] * main_layer_dims[i])(g)
+        w = Reshape([main_layer_dims[i-1], main_layer_dims[i]])(w)
+        b = Dense(main_layer_dims[i])(g)
+        y = Lambda(manual_dense)([w, b, y])
+
+    input_tensor = [z_sample, x_all]
+
+    if Config.use_dot_mask:
+        input_tensor += [NoL, NoV]
+        mask = Lambda(dot_mask)([NoL, NoV])
+        y_hat = Multiply()([y, mask])
+    else:
+        y_hat = y
+    
+    hyper_decoder = Model(input_tensor, y_hat, name='hyperDecoder')
+    return hyper_decoder
+
+def L2(args):
+    y, y_hat = args
+    BCE = 0.5 * (y - y_hat)**2
+    BCE = K.sum(K.reshape(BCE,[K.shape(BCE)[0], -1]), -1)
+    return K.expand_dims(BCE)
+
+def get_hypernet_trainer(hyper_decoder, nps_decoder):
+    x_all = Input(shape=(None, Config.in_dim,), name="x_all")
+    z_sample = Input(shape=(Config.z_dim, ), name="z_sample")
+    NdotL_map = Input(shape=(None, 1,), name='NdotL_map')
+    NdotV_map = Input(shape=(None, 1,), name='NdotV_map')
+
+    input_tensor = [z_sample, x_all]
+    target_input_tensor = [z_sample, z_sample, x_all]
+    if Config.use_dot_mask:
+        input_tensor += [NdotL_map, NdotV_map]
+        target_input_tensor += [NdotL_map, NdotV_map]
+
+    y_hat = hyper_decoder(input_tensor)
+    nps_decoder.trainable=False
+    y_nps = nps_decoder(target_input_tensor)
+
+    BSE = Lambda(L2, name='BSE')([y_nps, y_hat])
+    postDecoderTrainer = Model(input_tensor, BSE)
+    postDecoderTrainer.compile(loss={'BSE':lambda y_true, y_pred: y_pred},
+        optimizer=tf.keras.optimizers.Adam(lr=1e-4))
+    return postDecoderTrainer

@@ -45,7 +45,7 @@ def encode_material(mat_fn, x_grid, NoL, NoV, encoder):
     z = encoder.predict([x_input, data])
     return z
 
-def decode_material(x_grid, NoL, NoV, z, decoder):
+def decode_material(x_grid, NoL, NoV, z, decoder, is_hypernet=False):
     shp = BRDFSHAPE
     bs = z[0].shape[0]
 
@@ -53,7 +53,7 @@ def decode_material(x_grid, NoL, NoV, z, decoder):
     x_input = np.repeat(x_grid, bs, 0)
     NoL_batch = np.repeat(NoL.reshape(1, -1, 1), bs, 0)
     NoV_batch = np.repeat(NoV.reshape(1, -1, 1), bs, 0)
-    target_input_tensor = [z[0], z[1], x_input]
+    target_input_tensor = [z[0], z[1], x_input] if not is_hypernet else [z[0], x_input]
     if Config.use_dot_mask:
         target_input_tensor += [NoL_batch, NoV_batch]
 
